@@ -5,9 +5,10 @@ import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 
-const COUNT = 400;
-const CONN_DIST = 26;
-const MAX_LINES = 1000;
+const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+const COUNT = isMobile ? 150 : 300;
+const CONN_DIST = isMobile ? 20 : 24;
+const MAX_LINES = isMobile ? 300 : 700;
 const MOUSE_R = 35;
 const MOUSE_F = 0.25;
 
@@ -51,8 +52,8 @@ export default function Background() {
     const H = () => window.innerHeight;
 
     /* ── Renderer ── */
-    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: !isMobile, powerPreference: 'low-power' });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobile ? 1 : 1.5));
     renderer.setSize(W(), H());
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.0;
@@ -68,10 +69,10 @@ export default function Background() {
     /* ── Post-processing: Bloom ── */
     const composer = new EffectComposer(renderer);
     composer.addPass(new RenderPass(scene, camera));
-    const bloom = new UnrealBloomPass(
-      new THREE.Vector2(W(), H()),
-      1.1, 0.45, 0.12,
-    );
+    const bloomRes = isMobile
+      ? new THREE.Vector2(Math.floor(W() / 2), Math.floor(H() / 2))
+      : new THREE.Vector2(W(), H());
+    const bloom = new UnrealBloomPass(bloomRes, 1.1, 0.45, 0.12);
     composer.addPass(bloom);
     composer.addPass(new OutputPass());
 
@@ -127,15 +128,17 @@ export default function Background() {
       blending: THREE.AdditiveBlending,
     });
 
+    const torusSeg = isMobile ? 60 : 100;
     const torus = new THREE.Mesh(
-      new THREE.TorusGeometry(45, 0.2, 8, 140),
+      new THREE.TorusGeometry(45, 0.2, 6, torusSeg),
       wireMat(0x00d4ff, 0.055),
     );
     torus.rotation.x = Math.PI / 3;
     scene.add(torus);
 
+    const knotSeg = isMobile ? 50 : 80;
     const knot = new THREE.Mesh(
-      new THREE.TorusKnotGeometry(18, 0.15, 120, 8, 2, 3),
+      new THREE.TorusKnotGeometry(18, 0.15, knotSeg, 6, 2, 3),
       wireMat(0x0ae98a, 0.035),
     );
     knot.position.set(38, 15, -20);
@@ -149,7 +152,8 @@ export default function Background() {
     scene.add(dodeca);
 
     /* ── Grid cyberpunk ── */
-    const grid = new THREE.GridHelper(300, 60, 0x0ae98a, 0x0ae98a);
+    const gridDiv = isMobile ? 30 : 50;
+    const grid = new THREE.GridHelper(300, gridDiv, 0x0ae98a, 0x0ae98a);
     grid.material.transparent = true;
     grid.material.opacity = 0.025;
     grid.material.blending = THREE.AdditiveBlending;

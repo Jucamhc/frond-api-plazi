@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import compression from 'compression';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 
@@ -9,12 +10,13 @@ const __dirname = dirname(__filename);
 const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
 const app = express();
 
+app.use(compression());
 app.use(express.json());
 app.use(cors());
 
-/* ─── Caché en memoria (TTL: 5 min) ────────────────── */
+/* ─── Caché en memoria (TTL: 15 min) ───────────────── */
 const cache = new Map();
-const CACHE_TTL = 5 * 60 * 1000;
+const CACHE_TTL = 15 * 60 * 1000;
 
 function getCached(key) {
     const entry = cache.get(key);
@@ -248,7 +250,11 @@ app.get('/api_profile/:id', async (req, res) => {
 
 /* ─── Frontend estático (producción) ───────────────── */
 const distPath = join(__dirname, '..', 'dist');
-app.use(express.static(distPath));
+app.use('/assets', express.static(join(distPath, 'assets'), {
+    maxAge: '1y',
+    immutable: true,
+}));
+app.use(express.static(distPath, { maxAge: '10m' }));
 app.get('*', (req, res) => {
     res.sendFile(join(distPath, 'index.html'));
 });

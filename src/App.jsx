@@ -1,13 +1,15 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react';
 import { FaTwitter, FaMailBulk, FaSearch, FaTimes, FaLinkedin, FaBalanceScale, FaChartBar } from 'react-icons/fa';
 import { FiGithub, FiGlobe, FiAlertCircle } from 'react-icons/fi';
 import { fetchData } from './fetchData';
-import Background from './Background';
-import DiplomaModal from './DiplomaModal';
-import AvatarModal from './AvatarModal';
-import ShareModal from './ShareModal';
-import CompareModal from './CompareModal';
-import AnalyticsModal, { applyTheme, loadSavedTheme } from './AnalyticsModal';
+
+const Background = lazy(() => import('./Background'));
+const DiplomaModal = lazy(() => import('./DiplomaModal'));
+const AvatarModal = lazy(() => import('./AvatarModal'));
+const ShareModal = lazy(() => import('./ShareModal'));
+const CompareModal = lazy(() => import('./CompareModal'));
+const AnalyticsModal = lazy(() => import('./AnalyticsModal'));
+import { applyTheme, loadSavedTheme } from './themes';
 
 /* ─── Hook: count-up animado ────────────────────────── */
 function useCountUp(target, duration = 900) {
@@ -161,7 +163,9 @@ export default function App() {
   /* ════════ JSX ════════ */
   return (
     <>
-      <Background />
+      <Suspense fallback={<div className="fixed inset-0" style={{ background: 'var(--dark)', zIndex: 0 }} />}>
+        <Background />
+      </Suspense>
 
       {/* Pulse wave al buscar */}
       {scanning && <div key={pulseKey} className="pulse-wave" />}
@@ -465,47 +469,44 @@ export default function App() {
         </p>
       </div>
 
-      {/* Modal de diploma */}
-      {selectedCourse && (
-        <DiplomaModal
-          course={selectedCourse}
-          onClose={() => setSelectedCourse(null)}
-        />
-      )}
+      <Suspense fallback={null}>
+        {selectedCourse && (
+          <DiplomaModal
+            course={selectedCourse}
+            onClose={() => setSelectedCourse(null)}
+          />
+        )}
 
-      {/* Modal de avatar — efecto warp espacial */}
-      {showAvatar && data && (
-        <AvatarModal
-          src={data.avatar}
-          name={data.name}
-          username={data.username}
-          onClose={() => setShowAvatar(false)}
-        />
-      )}
+        {showAvatar && data && (
+          <AvatarModal
+            src={data.avatar}
+            name={data.name}
+            username={data.username}
+            onClose={() => setShowAvatar(false)}
+          />
+        )}
 
-      {/* Modal de compartir en LinkedIn */}
-      {showShare && data && (
-        <ShareModal
-          data={data}
-          onClose={() => setShowShare(false)}
-        />
-      )}
+        {showShare && data && (
+          <ShareModal
+            data={data}
+            onClose={() => setShowShare(false)}
+          />
+        )}
 
-      {/* Modal de comparación de perfiles */}
-      {showCompare && (
-        <CompareModal
-          initialUser={data?.username || ''}
-          onClose={() => setShowCompare(false)}
-        />
-      )}
+        {showCompare && (
+          <CompareModal
+            initialUser={data?.username || ''}
+            onClose={() => setShowCompare(false)}
+          />
+        )}
 
-      {/* Modal de analíticas */}
-      {showAnalytics && data && (
-        <AnalyticsModal
-          data={data}
-          onClose={() => setShowAnalytics(false)}
-        />
-      )}
+        {showAnalytics && data && (
+          <AnalyticsModal
+            data={data}
+            onClose={() => setShowAnalytics(false)}
+          />
+        )}
+      </Suspense>
     </>
   );
 }
