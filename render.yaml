@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: frond-api-plazi
+    runtime: node
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: node server/index.js
+    envVars:
+      - key: NODE_ENV
+        value: production
