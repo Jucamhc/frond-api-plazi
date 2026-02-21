@@ -10,10 +10,17 @@ function proxyUrl(src) {
 
 function loadImg(src) {
   return new Promise((resolve, reject) => {
+    if (!src) return reject(new Error('no src'));
     const img = new Image();
     img.crossOrigin = 'anonymous';
     img.onload = () => resolve(img);
-    img.onerror = reject;
+    img.onerror = () => {
+      const fallback = new Image();
+      fallback.crossOrigin = 'anonymous';
+      fallback.onload = () => resolve(fallback);
+      fallback.onerror = reject;
+      fallback.src = src;
+    };
     img.src = proxyUrl(src);
   });
 }
@@ -364,7 +371,18 @@ export default function ShareModal({ data, onClose }) {
   const shareText = buildShareText(data);
 
   const openLinkedIn = () => {
-    window.open(`https://www.linkedin.com/feed/?shareActive=true&text=${encodeURIComponent(shareText)}`, '_blank');
+    if (canvasUrl) {
+      const a = document.createElement('a');
+      a.href = canvasUrl;
+      a.download = `platzi-${data.username}-${format}.png`;
+      a.click();
+    }
+    navigator.clipboard.writeText(shareText).catch(() => {});
+    setCopied(true);
+    setTimeout(() => {
+      setCopied(false);
+      window.open(`https://www.linkedin.com/feed/?shareActive=true&text=${encodeURIComponent(shareText)}`, '_blank');
+    }, 600);
   };
 
   const downloadImage = () => {
@@ -449,9 +467,9 @@ export default function ShareModal({ data, onClose }) {
         <div className="flex-shrink-0 px-5 pb-5 pt-2">
           <div className="neon-divider mb-4" />
           <div className="flex items-center gap-3 flex-wrap">
-            <button onClick={openLinkedIn} className="share-btn share-btn-linkedin flex items-center gap-2 flex-1 justify-center">
-              <FaLinkedin size={16} />
-              Compartir en LinkedIn
+            <button onClick={openLinkedIn} className="share-btn share-btn-linkedin flex items-center gap-2 flex-1 justify-center flex-col py-3">
+              <span className="flex items-center gap-2"><FaLinkedin size={16} /> Compartir en LinkedIn</span>
+              <span style={{ fontSize: 10, opacity: 0.6 }}>Descarga imagen + copia texto + abre LinkedIn</span>
             </button>
             <button onClick={downloadImage} disabled={generating || !canvasUrl} className="share-btn share-btn-download flex items-center gap-2">
               <FaDownload size={13} />
