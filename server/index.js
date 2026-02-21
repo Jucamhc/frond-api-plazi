@@ -1,5 +1,10 @@
 import express from 'express';
 import cors from 'cors';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
 const app = express();
@@ -172,11 +177,7 @@ app.get('/api_profile/proxy-image', async (req, res) => {
     }
 });
 
-/* ─── Rutas ─────────────────────────────────────────── */
-app.get('/', (req, res) => {
-    res.json({ message: 'API Platzi Profile. Consulta: /api_profile/:username' });
-});
-
+/* ─── Rutas API ────────────────────────────────────── */
 app.get('/api_profile/:id', async (req, res) => {
     const user = req.params.id.trim();
 
@@ -245,5 +246,12 @@ app.get('/api_profile/:id', async (req, res) => {
     }
 });
 
+/* ─── Frontend estático (producción) ───────────────── */
+const distPath = join(__dirname, '..', 'dist');
+app.use(express.static(distPath));
+app.get('*', (req, res) => {
+    res.sendFile(join(distPath, 'index.html'));
+});
+
 const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => console.log(`API escuchando en el puerto ${PORT}`));
+app.listen(PORT, () => console.log(`Servidor escuchando en el puerto ${PORT}`));
