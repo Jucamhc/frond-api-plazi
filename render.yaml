@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: platzi-profile-api
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: node server/index.js
+    envVars:
+      - key: PORT
+        value: 3001
+      - key: NODE_ENV
+        value: production
